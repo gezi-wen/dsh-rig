@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Plugin Lab",
+    "description": "Runs a real, process-isolated DSH instance beside your conversation. Start, restart, switch the DSH version and read its logs from the right sidebar, then either keep it locked (agent-only) or step in yourself. Every lab gets its own DSH_HOME, profile, port and workspace, so a crash stays inside the lab and never touches this session. Two tools are added for the agent: plugin_lab (lifecycle, always on) and lab_ui (click, type, screenshot, registered only while you allow it). Turning the bundle off stops the labs and leaves their files on disk.",
+    "detail": "docs/DETAIL.md"
+  }
+}

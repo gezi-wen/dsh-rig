@@ -1,0 +1,85 @@
+{
+  "name": "dsh-rig",
+  "version": "0.1.0",
+  "description": "Right-sidebar plugin lab for DeepSeek Harness: a real, process-isolated DSH you can start, restart, version-switch, lock or take over — crashes stay inside the lab.",
+  "type": "module",
+  "main": "lib/index.js",
+  "icon": "./icon.svg",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./icon": "./icon.svg",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib/",
+    "cordis.patch.yml",
+    "locale/",
+    "docs/",
+    "icon.svg",
+    "NOTICE",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "license": "Apache-2.0",
+  "author": "gezi-wen",
+  "engines": {
+    "node": ">=22",
+    "dsh": ">=0.2.0-rc.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
+    },
+    "compatibility": {
+      "dsh": ">=0.2.0-rc.1",
+      "dshReleases": {
+        "0.2.2-rc.5": "compatible"
+      }
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "playwright": ">=1.40.0",
+    "react": "^18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "react": "^18.0.0"
+  },
+  "scripts": {
+    "test": "node --test test/pure.test.mjs test/probe.test.mjs test/structure.test.mjs test/report.test.mjs test/mount.test.mjs",
+    "check:client": "node --check lib/client.js",
+    "check:host": "node --check lib/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gezi-wen/dsh-rig.git"
+  },
+  "homepage": "https://github.com/gezi-wen/dsh-rig#readme",
+  "bugs": {
+    "url": "https://github.com/gezi-wen/dsh-rig/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek",
+    "deepseek-harness",
+    "cordis",
+    "plugin-development",
+    "devtools",
+    "sandbox",
+    "lab"
+  ]
+}

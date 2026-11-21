@@ -1,0 +1,18 @@
+dsh-rig
+Copyright 2026 gezi-wen
+
+This product includes software developed as part of DeepSeek Harness plugin
+development. It bundles no third-party runtime dependencies.
+
+Design notes
+------------
+
+The planned "agents at work" visualisation (a later release) takes its *idea*
+from Swarm by Joel Califa and the Swarm Cursors extension by Dhvanil Patel.
+Neither project is licensed for reuse, and no code, SVG paths, colour tables or
+other assets from them are included here. Any animation shipped by this package
+is an independent implementation of the concept.
+
+"DeepSeek", "DeepSeek Harness" and the DeepSeek Harness marks are trademarks of
+their respective owners. This package is an independent plugin and is not
+published by DeepSeek.

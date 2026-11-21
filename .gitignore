@@ -1,0 +1,16 @@
+# 依赖与产物
+node_modules/
+*.tgz
+.vendor/
+
+# 本地调试产物（快照、日志、截图、实例 pid）
+.snap/
+*.log
+
+# 内部流程文档（含本机路径与发布步骤，不进公开仓库）
+RELEASE-CHECKLIST.md
+.release-notes.md
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
