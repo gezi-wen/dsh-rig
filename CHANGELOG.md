@@ -3,6 +3,15 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.1.2] - 2026-11-21
+
+### Added
+
+- `plugin_lab` 新增 `orphans` / `reap`：列出并回收宿主被硬杀后残留的实验室进程
+- HTTP 边新增 `GET /orphans` 与 `POST /orphans/reap`（只列不杀是默认，回收要显式请求）
+- 回收的判据只有一条：命令行带 `--profile rig-<已知 lab>` 但当前没在管理的进程，
+  不按端口或进程名杀
+
 ## [0.1.1] - 2026-11-21
 
 ### Fixed

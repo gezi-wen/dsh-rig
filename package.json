@@ -1,6 +1,6 @@
 {
   "name": "dsh-rig",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Right-sidebar plugin lab for DeepSeek Harness: a real, process-isolated DSH you can start, restart, version-switch, lock or take over — crashes stay inside the lab.",
   "type": "module",
   "main": "lib/index.js",
