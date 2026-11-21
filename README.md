@@ -114,10 +114,12 @@ dsh plugin --profile web add dsh-rig
 - 换 DSH 版本目前只能切到**已装**的版本（安装新版本的入口还没做）。
 - 「派活给实验室里的智能体」与「施工过程可视化」还没做——现在靠你在解锁态下自己输入，或让智能体用 `lab_ui` 去点。
 - 无头浏览器会开一个本地调试端口；它随实验室起停、只在授权期间存在，但这是「模拟点击」这条路的固有代价。
-- **内嵌视口在某些宿主里会停在「dsh web authentication required」**：实验室的登录是「token → 303 换成 `SameSite=Strict` 的 HttpOnly cookie → 再请求 `/`」。
-  当宿主页面与实验室**不在同一个主机名**上（例如页面是 `localhost:xxx`、实验室是 `127.0.0.1:46xxx`），iframe 会被判为跨站，那颗 cookie 存不下，页面就退回鉴权提示。
-  临时办法：点「弹出到窗口」，在系统浏览器里用（独立 cookie，正常）。修法见 `docs/DESIGN.md` 待办。
-- 桌面版与 web 版同时开着时共用同一份 `labs.json`——两边各自持有一份内存状态，谁后写谁赢。
+- 内嵌视口曾经在「宿主页面与实验室主机名不同」时停在「dsh web authentication required」（0.1.5 已修）：
+  实验室的登录是「token → 303 换成 `SameSite=Strict` 的 HttpOnly cookie → 再请求 `/`」，
+  而 `localhost:xxx` 与 `127.0.0.1:46xxx` 不同站，iframe 里那颗 cookie 存不下。
+  现在 `/frame` 的 302 会把主机名换成本次请求的主机名，两者同站。
+- 桌面版与 web 版同时开着时共用同一份 `labs.json`——0.1.5 起写盘带锁并**读盘合并**，
+  两边建的实验室都留着；不是本进程管的会标成只读。
 
 ## 许可
 

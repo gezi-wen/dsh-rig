@@ -19,15 +19,15 @@ import { mountRoutes } from '../lib/http/routes.js'
 const OWNER = 'session-4f1c2a9e-8b3d-4c11-9f0a-77e2b6d1c333'
 const OWNER_TITLE = 'DSH 插件实验室开发规划'
 
-function harness({ ownerSessionId = null } = {}) {
+function harness({ ownerSessionId = null, running = false } = {}) {
   const lab = {
     id: 'lab1',
     name: '实验台 lab1',
     version: 'host',
     profile: 'rig-lab1',
-    status: 'created',
+    status: running ? 'running' : 'created',
     port: 46000,
-    url: null,
+    url: running ? 'http://127.0.0.1:46000/?token=abc123' : null,
     ownerSessionId,
     ownerSince: ownerSessionId ? '2026-11-21T10:00:00.000Z' : null,
   }
@@ -155,4 +155,33 @@ test('路由：缺 x-dsh-rig 头一律 403（防别的网页顺手打你的实�
   const res = fakeRes()
   await handler(fakeReq({ url: '/dsh-rig/api/state', headers: { 'x-dsh-rig': '' } }), res)
   assert.equal(res.status, 403)
+})
+
+// ── /frame：iframe 必须与宿主同站，否则实验室的 SameSite=Strict 登录 cookie 存不下 ──
+
+const frameOf = (host, { running = true, sig = 'test-sig' } = {}) => {
+  const { handler } = harness({ running })
+  const res = fakeRes()
+  handler(fakeReq({ url: `/dsh-rig/api/frame?id=lab1&sig=${sig}&n=1`, headers: { host } }), res)
+  return res
+}
+
+test('/frame：主机名跟着请求走（localhost 页面就 302 到 localhost:46000）', () => {
+  const res = frameOf('localhost:63425')
+  assert.equal(res.status, 302)
+  const location = res.headers.location
+  assert.match(location, /^http:\/\/localhost:46000\/\?token=abc123$/u, `实际：${location}`)
+})
+
+test('/frame：127.0.0.1 的页面仍然 302 到 127.0.0.1（端口与 token 不变）', () => {
+  const res = frameOf('127.0.0.1:63425')
+  assert.equal(res.status, 302)
+  assert.match(res.headers.location, /^http:\/\/127\.0\.0\.1:46000\/\?token=abc123$/u)
+})
+
+test('/frame：坏签名 403、没运行 503（两者都不该把 iframe 带到实验室）', () => {
+  assert.equal(frameOf('localhost:63425', { sig: 'wrong' }).status, 403)
+  const idle = frameOf('localhost:63425', { running: false })
+  assert.equal(idle.status, 503)
+  assert.match(idle.body, /实验室未运行/u)
 })

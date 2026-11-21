@@ -3,6 +3,21 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.1.5] - 2026-11-21
+
+### Fixed
+
+- **面板里显示不出实验室**（`dsh web authentication required`）：`/frame` 的 302 现在把主机名换成
+  **本次请求的主机名**。原因：实验室登录是「token → 303 换成 `SameSite=Strict` 的 HttpOnly cookie → 再请求 `/`」，
+  宿主页面若是 `localhost:xxx` 而重定向到 `127.0.0.1:46xxx`，iframe 就跨站了，那颗 cookie 存不下。
+  同一份代码 A/B 实测：页面 `127.0.0.1` 正常、页面 `localhost` 退回鉴权页；修完后两者都正常。
+- **两个宿主进程互相吞实验室**：`labs.json` 的写盘改成「锁 → 读盘 → 合并 → 写」。
+  桌面版与 web 版同时开着时，各自持一份内存状态、谁后写谁赢 —— 实测丢过一条记录。
+  现在盘上有、内存没有的会留着；每条实验室带 `hostId`，不是本进程管的在面板里只读；
+  老记录没有 `hostId` 的按「自己的」处理，升级不会把人锁在门外。
+- `load()` 的裸 `catch` 会把任何异常（包括漏 import 的 `ReferenceError`）吞成「0 个实验室」：
+  现在只有文件不存在才算空，其它错误如实上报并说明原因。
+
 ## [0.1.4] - 2026-11-21
 
 ### Added

@@ -70,27 +70,26 @@
 
 ## 七、待办（按优先级）
 
-### 1. 内嵌视口的主机名不一致（0.1.4 已知缺陷，用户 2026-11-21 报）
+### 1. 内嵌视口的主机名不一致（0.1.4 缺陷，0.1.5 已修）
 
 症状：桌面版面板里 iframe 停在 `dsh web authentication required; reopen the URL printed by dsh web.`
 
-已查清的事实：
+**已确认的机制**（`localhost` / `127.0.0.1` 两个页面 iframe 同一个实验室，A/B 对照）：
 
-- `GET /dsh-rig/api/frame` 返回 `302 → http://127.0.0.1:46000/?token=…`，用 curl 跟随重定向拿到 **200 / 41 KB** —— 服务端这条链是通的；
-- 实验室的登录方式是 `?token=` → **303** + `Set-Cookie: dsh-auth-<token 哈希>=…; HttpOnly; SameSite=Strict` → 再请求 `/`。
-  **curl 不带 cookie jar 时照样 401** —— 也就是这个 token 换成 cookie 的一步是必需的，不是可选优化；
-- 实验室**不校验 `Host`**（`Host: localhost:46000` 与 `127.0.0.1:46000` 都回 303），所以换主机名不会破 token。
+- 实验室的登录是 `?token=` → **303** + `Set-Cookie: dsh-auth-<token 哈希>=…; HttpOnly; SameSite=Strict` → 再请求 `/`。
+  curl 不带 cookie jar 时照样 401 —— 换成 cookie 这一步是必需的；
+- 页面在 `127.0.0.1:8099`、实验室在 `127.0.0.1:46000` → **正常显示**；
+- 页面在 `localhost:8099`、实验室在 `127.0.0.1:46000` → **退回鉴权页**。
+  两者不同站，`SameSite=Strict` 的 cookie 在 iframe 里存不下；
+- 实验室**不校验 `Host`**（`localhost:46000` 与 `127.0.0.1:46000` 都回 303），所以换主机名没有副作用。
 
-推断（待确证）：桌面版页面若是 `http://localhost:<port>`，而实验室 URL 是 `http://127.0.0.1:46xxx`，两者**不同站**，
-`SameSite=Strict` 的 cookie 在 iframe 里存不下 → 后续请求没有凭据 → 401 页面。web 版之所以正常，是因为我测试时页面与实验室都是 `127.0.0.1`。
+**修法**：`/frame` 的 302 用本次请求的 `Host` 主机名替换实验室地址的主机名，让 iframe 与宿主页面同站。
+验证走同一条 A/B：页面用 `localhost` 打开宿主、面板里实验室正常渲染。
 
-修法（一行级）：`/frame` 的 302 **把 `Location` 的主机名换成本次请求 `Host` 的主机名**，让 iframe 与页面同站。
-要验的是：`localhost` 页面 + `localhost:46xxx` 实验室能否真正登录（不是只拿到 303）。
+### 2. 跨进程共用 `labs.json`（0.1.5 已修）
 
-### 2. 跨进程共用 `labs.json`
-
-桌面版与 web 版各持一份内存状态，`labs.json` 谁后写谁赢 —— 2026-11-21 实测发生过一次实验室记录被另一端清空。
-方案：写盘加锁 + 读盘合并（每个 lab 带 `hostId`，别人创建的在界面上只读）。
+写盘加锁（`labs.json.lock`，陈旧锁按 mtime 打破）+ 读盘合并（`lib/lab/merge.js`），
+每个 lab 带 `hostId`，别人创建的在界面上只读。见 `lib/lab/state-store.js`。
 
 ### 3. `desktop` 运行时
 
