@@ -50,6 +50,12 @@ function Stop-Instance {
   }
 }
 
+# ⚠️ `-DSHHome` 只改了本脚本自己的路径是不够的：子进程 `dsh` / `pnpm` 看的是**环境变量**。
+# 不同步的话，脚本会把包装进 A 家、实例却从 B 家启动 —— 2026-11-21 就踩了：
+# 装进了 A 家、实例却从 B 家起，两边都以为自己是对的。
+$env:DSH_HOME = $DSHHome
+if ($DSHBin -and (Test-Path (Join-Path $DSHBin 'lib\bin.js'))) { $env:DSH_INSTALL_DIR = $DSHBin }
+
 Stop-Instance
 if ($Stop) { return }
 
@@ -75,6 +81,15 @@ if (Test-Path $installed) {
 # ── 安装进 web profile ───────────────────────────────────────────────
 $spec = 'file:' + ($tgz -replace '\\', '/')
 $install = & dsh plugin --profile web add $spec 2>&1 | Out-String
+# ⚠️ `dsh plugin add` 只在**清单变化**时才真的写盘；spec 没变时它当自己幂等、直接返回。
+# 而 lockfile 里的 integrity 还是旧 tgz 的，`pnpm install --force` 也会照旧 integrity 从 store 装
+# —— 于是「重装成功」但跑的还是上一版的代码（2026-11-21 实测，hash 对不上才发现）。
+# 只有 remove + add 会让 pnpm 重新读 tgz、重算 integrity。
+Push-Location (Join-Path $DSHHome 'profiles\web')
+try {
+  & pnpm remove dsh-rig 2>&1 | Out-Null
+  & pnpm add $spec 2>&1 | Out-Null
+} finally { Pop-Location }
 # 判据是**装完能穿透读到 package.json**，不是退出码：dsh 会因不相干的插件行不兼容而回非零，
 # 那种噪声不代表我们没装上（这里踩过一次）。
 $okFile = Join-Path $installed 'package.json'
@@ -85,8 +100,10 @@ if ($NoRestart) { return }
 
 # ── 起实例 ───────────────────────────────────────────────────────────
 Remove-Item $outLog, $errLog -Force -ErrorAction SilentlyContinue
+# ⚠️ Start-Process 把 -ArgumentList 用空格拼起来，**不做引号处理**：
+# 安装路径里有空格（`C:\Program Files\…`）时必须自己加引号，否则 node 会去找 `C:\Program`。
 $p = Start-Process -FilePath 'node' `
-  -ArgumentList @($bin, '--profile', 'web', '--port', '0', '--no-open') `
+  -ArgumentList @("`"$bin`"", '--profile', 'web', '--port', '0', '--no-open') `
   -RedirectStandardOutput $outLog -RedirectStandardError $errLog -PassThru -WindowStyle Hidden
 $p.Id | Set-Content $pidFile
 "实例 pid=$($p.Id)，等 $WaitSeconds 秒…"

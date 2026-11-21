@@ -26,15 +26,29 @@ dsh plugin --profile web add dsh-rig
 
 Or from the app: **Plugins → Add plugin → dsh-rig**.
 
-Reload the page afterwards: the session header gains a "Plugin Lab" button, and the right sidebar's start page gains a card.
+Reload the page afterwards: the right sidebar's start page gains a **Plugin Lab** card (hand-drawn icon — two offset windows, because the point is that something real is nested inside the panel).
 
 ## Use
 
-1. Open the **Plugin Lab** tab → **Create lab**;
+1. Open the **Plugin Lab** card → **Create lab**;
 2. **Start** — a real DSH comes up in about ten seconds, embedded right there;
-3. **Locked / Step in** — locking blocks only your mouse and keyboard (anti-mistouch); unlock and click away;
-4. **Restart / Refresh / Pop out / Stop / Destroy** — the whole lifecycle in one row;
-5. **Logs** — follows its stdout/stderr, with tokens and user names redacted.
+3. Click into it straight away (unlocked by default). Hit **Locked** at the bottom when you only want to watch;
+4. **⋯** holds the rest: restart / refresh / pop out / switch version / isolation notes / destroy (destroy asks twice);
+5. **Logs · N** expands the console tail, with tokens and user names redacted.
+
+**The right sidebar opens itself the first time an agent drives the lab**, so you never go looking for it. Once per session.
+
+### Occupancy: the lab is global, the panel is per-session
+
+One lab can be on screen in two sessions at once. The only rule: **you claim it by acting**, not by opening the panel.
+
+| State | Header chip | Primary button | Viewport |
+|---|---|---|---|
+| This session drives it | `this session` | Start / Stop | clickable |
+| Another session drives it | `session a1b2c3d4 · since 18:20` | only **Take over** | **still visible**, input blocked |
+| Nobody drives it | `idle` | Start | clickable |
+
+Only the first 8 characters of a session id are shown — titles can be private. Taking over interrupts whatever the other session was doing.
 
 Labs live under the application data directory (`%LOCALAPPDATA%\dsh-rig` on Windows), one folder per lab with `home/` (DSH_HOME), `workspace/` and `shots/`.
 
@@ -54,8 +68,11 @@ Two tools are added:
 
 | Tool | Available | Does |
 |---|---|---|
-| `plugin_lab` | always | `list / create / start / stop / restart / destroy / status / logs / report / versions / set_version` |
+| `plugin_lab` | always | `list / create / start / stop / restart / destroy / status / logs / report / versions / set_version / orphans / reap` |
 | `lab_ui` | **only while you allow it** | `snapshot / screenshot / click / type / task` — finds buttons **by their text** and lists candidates when it cannot |
+
+Both tools obey occupancy: while another session drives the lab they **refuse** and name the owner,
+unless you pass `force: true` to take over (which interrupts the other session's work).
 
 `lab_ui` is not resident: a tool schema costs context every turn, and most sessions never click anything. So it sits behind a permission — the panel's "Let the agent operate the UI" switch registers it, and turning the switch off unregisters it.
 

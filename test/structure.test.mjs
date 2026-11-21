@@ -21,7 +21,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const LIB = join(ROOT, 'lib')
 
 /** 纯逻辑层白名单：这些文件**不许**出现 `node:` 导入。 */
-const PURE_FILES = ['lab/constants.js', 'lab/naming.js', 'lab/registry.js', 'lab/spawn-plan.js', 'lab/redact.js', 'lab/log-buffer.js', 'lab/runtime.js']
+const PURE_FILES = ['lab/constants.js', 'lab/naming.js', 'lab/registry.js', 'lab/spawn-plan.js', 'lab/redact.js', 'lab/log-buffer.js', 'lab/runtime.js', 'lab/ownership.js', 'lab/drive-guard.js']
 
 const read = (rel) => readFileSync(join(LIB, rel), 'utf8')
 
