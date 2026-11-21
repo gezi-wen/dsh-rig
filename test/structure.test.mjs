@@ -99,7 +99,7 @@ test('守卫 4b：host 与 client 的 API 前缀必须对拍相等', () => {
 })
 
 test('守卫 5：写盘与杀进程只许在 IO 层', () => {
-  const allowedWrite = new Set(['lab/supervisor.js', 'lab/seed.js', 'lab/versions.js', 'lab/process.js', 'lab/core-bin.js', 'lab/browser.js', 'lab/driver.js', 'lab/ui/cdp-impl.js', 'lab/ui/playwright-impl.js', 'lab/report.js', 'lab/orphans.js'])
+  const allowedWrite = new Set(['lab/supervisor.js', 'lab/state-store.js', 'lab/seed.js', 'lab/versions.js', 'lab/process.js', 'lab/core-bin.js', 'lab/browser.js', 'lab/driver.js', 'lab/ui/cdp-impl.js', 'lab/ui/playwright-impl.js', 'lab/report.js', 'lab/orphans.js'])
   for (const file of ALL) {
     if (allowedWrite.has(file)) continue
     const text = read(file)
