@@ -75,6 +75,20 @@ test('启动 argv：端口 0、只绑回环、不开浏览器', () => {
   assert.equal(plan.env.ELECTRON_RUN_AS_NODE, undefined, '非 Electron 不该带这个变量')
 })
 
+test('启动 argv：给了固定端口就用它（origin 稳定靠这条）', () => {
+  const plan = buildStartPlan({
+    execPath: 'node.exe',
+    isElectron: false,
+    coreBin: 'D:/core/lib/bin.js',
+    profile: 'rig-lab1',
+    cwd: 'D:/w',
+    home: 'D:/h',
+    env: {},
+    port: 46007,
+  })
+  assert.match(plan.args.join(' '), /--port 46007/u)
+})
+
 test('启动 env：桌面版必须带 ELECTRON_RUN_AS_NODE', () => {
   const plan = buildStartPlan({
     execPath: 'electron.exe',
