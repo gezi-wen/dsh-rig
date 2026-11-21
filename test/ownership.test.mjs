@@ -9,6 +9,7 @@ import assert from 'node:assert/strict'
 
 import { canDrive, claimOwner, releaseOwner } from '../lib/lab/ownership.js'
 import { DRIVE_ACTIONS, guardDrive, isDriveAction, shortSession, takenMessage } from '../lib/lab/drive-guard.js'
+import { createTitleLookup } from '../lib/lab/session-title.js'
 
 test('无主：先到先得', () => {
   const lab = {}
@@ -119,4 +120,59 @@ test('驾驶：会话只露前 8 位，短 id 与文案同源', () => {
   assert.match(takenMessage('4f1c2a9e-8b3d'), /4f1c2a9e/u)
   assert.match(takenMessage('session-240add47-aab6'), /240add47/u)
   assert.doesNotMatch(takenMessage('session-240add47-aab6'), /会话 session-/u, '不能只显示前缀')
+})
+
+// ── 占用者显示成会话标题（与左侧栏同一份；标题会随对话实时变，所以每次现查） ──
+
+test('标题优先：有标题就用标题，没有才退回短 id', () => {
+  assert.match(takenMessage('session-240add47-aab6', 'DSH 插件实验室开发规划'), /DSH 插件实验室开发规划/u)
+  assert.doesNotMatch(takenMessage('session-240add47-aab6', 'DSH 插件实验室开发规划'), /240add47/u)
+  assert.match(takenMessage('session-240add47-aab6', '  '), /240add47/u, '空白标题当没有')
+})
+
+test('标题查询：服务缺失 / 会话不在 / 抛错 一律给空串，绝不让 /state 挂掉', () => {
+  assert.equal(createTitleLookup({ get: () => null })('abc'), '', '没有 sessions 服务')
+  assert.equal(createTitleLookup({})('abc'), '', 'ctx 连 get 都没有')
+
+  const session = { id: 'abc' }
+  const withTitle = (title) => ({
+    get: (key) =>
+      key === 'sessions' ? { get: (id) => (id === 'abc' ? session : undefined) } : key === 'sessionTitle' ? { get: () => ({ title }) } : null,
+  })
+  assert.equal(createTitleLookup(withTitle('  DSH 插件实验室开发规划  '))('abc'), 'DSH 插件实验室开发规划', '要 trim')
+  assert.equal(createTitleLookup(withTitle(undefined))('abc'), '')
+  assert.equal(createTitleLookup(withTitle('x'))('nope'), '', '会话不在本宿主')
+
+  const throwing = {
+    get: () => {
+      throw new Error('service disposed')
+    },
+  }
+  assert.equal(createTitleLookup(throwing)('abc'), '')
+})
+
+test('标题查询：没有 sessionTitle 服务时，自己从会话事件里折叠（web profile 就没装那个 bundle）', () => {
+  const session = {
+    id: 'abc',
+    snapshotEvents: () => [
+      { type: 'user/message' },
+      { type: 'session/title', data: { title: '旧标题' } },
+      { type: 'user/message' },
+      { type: 'session/title', data: { title: '  新标题  ' } },
+    ],
+  }
+  // 只有 sessions 服务，没有 sessionTitle —— 2026-11-21 在 web profile 上实测就是这个组合
+  const ctxOnlySessions = { get: (key) => (key === 'sessions' ? { get: () => session } : null) }
+  assert.equal(createTitleLookup(ctxOnlySessions)('abc'), '新标题', '取最后一条，并 trim')
+
+  // 服务在且给得出 → 用服务（它是官方口径）
+  const both = {
+    get: (key) =>
+      key === 'sessions' ? { get: () => session } : key === 'sessionTitle' ? { get: () => ({ title: '服务给的' }) } : null,
+  }
+  assert.equal(createTitleLookup(both)('abc'), '服务给的')
+
+  // 事件里没有标题 → 空串，调用方退回短 id
+  const noTitle = { get: (key) => (key === 'sessions' ? { get: () => ({ snapshotEvents: () => [{ type: 'user/message' }] }) } : null) }
+  assert.equal(createTitleLookup(noTitle)('abc'), '')
 })

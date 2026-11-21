@@ -45,10 +45,10 @@ One lab can be on screen in two sessions at once. The only rule: **you claim it 
 | State | Header chip | Primary button | Viewport |
 |---|---|---|---|
 | This session drives it | `this session` | Start / Stop | clickable |
-| Another session drives it | `session a1b2c3d4 · since 18:20` | only **Take over** | **still visible**, input blocked |
+| Another session drives it | `Plugin lab planning · since 18:20` | only **Take over** | **still visible**, input blocked |
 | Nobody drives it | `idle` | Start | clickable |
 
-Only the first 8 characters of a session id are shown — titles can be private. Taking over interrupts whatever the other session was doing.
+The owner is shown by its **session title** — the same one the left sidebar lists, refreshed live, so it follows retitling. Only when no title is available does it fall back to the first 8 characters of the id (full id on hover). Taking over interrupts whatever the other session was doing.
 
 Labs live under the application data directory (`%LOCALAPPDATA%\dsh-rig` on Windows), one folder per lab with `home/` (DSH_HOME), `workspace/` and `shots/`.
 
