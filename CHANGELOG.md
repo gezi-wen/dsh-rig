@@ -3,6 +3,15 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.1.1] - 2026-11-21
+
+### Fixed
+
+- 面板内嵌视图在实验室重启后卡在 `dsh web authentication required`：iframe 现在指向宿主的稳定入口
+  （每次 302 到实验室当前地址），不再持有会过期的端口与 token
+- 实验室换地址时主动重导航一次内嵌视图（此前只更新状态、不触发重新加载）
+- 事件流安静挂住时面板停在旧状态：新增 25 秒无事件即主动拉一次状态的看门狗
+
 ## [0.1.0] - 2026-11-21
 
 第一个可用版本。

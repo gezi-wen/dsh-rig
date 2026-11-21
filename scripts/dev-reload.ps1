@@ -59,6 +59,7 @@ if ($Stop) { return }
 $ver = (Get-Content (Join-Path $root 'package.json') -Raw | ConvertFrom-Json).version
 $tgz = Join-Path $vendor "dsh-rig-$ver.tgz"
 Remove-Item $tgz -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $vendor -Force | Out-Null
 Push-Location $root
 try { npm pack --pack-destination $vendor 2>&1 | Out-Null } finally { Pop-Location }
 if (-not (Test-Path $tgz)) { throw "打包产物没落在 $tgz（package.json 的 name/version 改过？）" }
