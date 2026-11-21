@@ -67,3 +67,31 @@
 4. 服务端：`plugin_lab` 驾驶校验（拒绝文案带占用者 id）
 5. SSE 单例 + `open-lab` 自动展开
 6. 发 `0.1.4`；之后 `0.2.0` = `desktop` 运行时
+
+## 七、待办（按优先级）
+
+### 1. 内嵌视口的主机名不一致（0.1.4 已知缺陷，用户 2026-11-21 报）
+
+症状：桌面版面板里 iframe 停在 `dsh web authentication required; reopen the URL printed by dsh web.`
+
+已查清的事实：
+
+- `GET /dsh-rig/api/frame` 返回 `302 → http://127.0.0.1:46000/?token=…`，用 curl 跟随重定向拿到 **200 / 41 KB** —— 服务端这条链是通的；
+- 实验室的登录方式是 `?token=` → **303** + `Set-Cookie: dsh-auth-<token 哈希>=…; HttpOnly; SameSite=Strict` → 再请求 `/`。
+  **curl 不带 cookie jar 时照样 401** —— 也就是这个 token 换成 cookie 的一步是必需的，不是可选优化；
+- 实验室**不校验 `Host`**（`Host: localhost:46000` 与 `127.0.0.1:46000` 都回 303），所以换主机名不会破 token。
+
+推断（待确证）：桌面版页面若是 `http://localhost:<port>`，而实验室 URL 是 `http://127.0.0.1:46xxx`，两者**不同站**，
+`SameSite=Strict` 的 cookie 在 iframe 里存不下 → 后续请求没有凭据 → 401 页面。web 版之所以正常，是因为我测试时页面与实验室都是 `127.0.0.1`。
+
+修法（一行级）：`/frame` 的 302 **把 `Location` 的主机名换成本次请求 `Host` 的主机名**，让 iframe 与页面同站。
+要验的是：`localhost` 页面 + `localhost:46xxx` 实验室能否真正登录（不是只拿到 303）。
+
+### 2. 跨进程共用 `labs.json`
+
+桌面版与 web 版各持一份内存状态，`labs.json` 谁后写谁赢 —— 2026-11-21 实测发生过一次实验室记录被另一端清空。
+方案：写盘加锁 + 读盘合并（每个 lab 带 `hostId`，别人创建的在界面上只读）。
+
+### 3. `desktop` 运行时
+
+实验室跑成真桌面壳（`--profile desktop` 的 Electron 实例），而不是 `dsh web`。
