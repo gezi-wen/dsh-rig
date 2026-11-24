@@ -31,6 +31,8 @@
   永远不会落到 cwd。
 - 一次性准备（profile 与凭据）从 `supervisor.js` 抽到 `lib/lab/provision.js`，
   就绪等待抽到 `lib/lab/health.js` —— supervisor 加完 pid 与补种后已贴 420 行上限。
+- 包里带了 `lib/backends/` 与 `lib/mirror/` 两个**尚未接线**的骨架（0.2.0 的桌面形态与画面镜像）：
+  不参与任何现有路径，行为无变化。
 - 面板 `⋯` 菜单：没在运行时「重启」变「启动」且可点（以前启动入口只在主按钮上，
   而主按钮此时正显示「接手」，等于两条路都断）。
 
