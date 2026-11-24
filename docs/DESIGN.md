@@ -68,29 +68,31 @@
 5. SSE 单例 + `open-lab` 自动展开
 6. 发 `0.1.4`；之后 `0.2.0` = `desktop` 运行时
 
-## 七、待办（按优先级）
+## 七、待办 → 版本计划
 
-### 1. 内嵌视口的主机名不一致（0.1.4 缺陷，0.1.5 已修）
+> 这一节原先挂着三条待办（内嵌视口主机名、跨进程共用 `labs.json`、`desktop` 运行时）。
+> 前两条已修，第三条升级成 0.2.0 的主体。**2026-11-24 起，施工计划统一写在 `docs/ROADMAP.md`** ——
+> 那里有版本号、改动落到哪个文件、怎么验收、出问题怎么退。本文件只管版式与交互，不再维护待办清单。
 
-症状：桌面版面板里 iframe 停在 `dsh web authentication required; reopen the URL printed by dsh web.`
+| 版本 | 主题 | 详见 |
+|---|---|---|
+| 0.1.6 | 治根：解锁死 + 启动自愈（不引新依赖、不改形态） | ROADMAP 第二节 |
+| 0.2.0 | 桌面形态：第二个实例 + 镜像通道（原第 3 条升级而来） | ROADMAP 第三节 |
+| 0.2.1 | 不炸死宿主：限额采样 + 自动回收 | ROADMAP 第四节 |
+| 0.3.0 | 内桥：`dispatch` / `events` | ROADMAP 第五节 |
 
-**已确认的机制**（`localhost` / `127.0.0.1` 两个页面 iframe 同一个实验室，A/B 对照）：
+跨平台差异（谁要授权、Wayland 怎么降级、无图形会话长什么样）在 `docs/PLATFORMS.md`。
 
-- 实验室的登录是 `?token=` → **303** + `Set-Cookie: dsh-auth-<token 哈希>=…; HttpOnly; SameSite=Strict` → 再请求 `/`。
-  curl 不带 cookie jar 时照样 401 —— 换成 cookie 这一步是必需的；
-- 页面在 `127.0.0.1:8099`、实验室在 `127.0.0.1:46000` → **正常显示**；
-- 页面在 `localhost:8099`、实验室在 `127.0.0.1:46000` → **退回鉴权页**。
-  两者不同站，`SameSite=Strict` 的 cookie 在 iframe 里存不下；
-- 实验室**不校验 `Host`**（`localhost:46000` 与 `127.0.0.1:46000` 都回 303），所以换主机名没有副作用。
+### 历史：原三条待办的结局（留档）
 
-**修法**：`/frame` 的 302 用本次请求的 `Host` 主机名替换实验室地址的主机名，让 iframe 与宿主页面同站。
-验证走同一条 A/B：页面用 `localhost` 打开宿主、面板里实验室正常渲染。
+| 原待办 | 结局 |
+|---|---|
+| 1. 内嵌视口主机名不一致（面板停在 `dsh web authentication required`） | 0.1.5 已修。机制：实验室的登录是「token → 303 + `SameSite=Strict` 的 HttpOnly cookie → 再请求 `/`」，`localhost:xxx` 与 `127.0.0.1:46xxx` 不同站，iframe 里那颗 cookie 存不下。修法：`/frame` 的 302 把主机名换成**本次请求的**主机名。 |
+| 2. 跨进程共用 `labs.json` | 0.1.5 已修：写盘加锁（`labs.json.lock`，陈旧锁按 mtime 打破）+ 读盘合并。0.1.6 再换归属判据：`hostId` → pid 存活（随机 `hostId` 在宿主重启后会把自己建的实验室判成别人的）。 |
+| 3. `desktop` 运行时 | 升级成 0.2.0 的主体。**不是**「换个 profile 起」，而是第二个桌面实例 + 插件推帧的镜像通道；形态由宿主决定，不提供切换开关（ROADMAP 零、1）。 |
 
-### 2. 跨进程共用 `labs.json`（0.1.5 已修）
+### 还留在本文件的约束
 
-写盘加锁（`labs.json.lock`，陈旧锁按 mtime 打破）+ 读盘合并（`lib/lab/merge.js`），
-每个 lab 带 `hostId`，别人创建的在界面上只读。见 `lib/lab/state-store.js`。
+- 版式与交互以第二节到第四节为准：改行为先改那几节，再改代码。
+- 「别的会话驾驶时视口仍允许看」是硬要求。`<MirrorView/>` 接进来之后不例外 —— 镜像态要能只挡输入、不遮画面。
 
-### 3. `desktop` 运行时
-
-实验室跑成真桌面壳（`--profile desktop` 的 Electron 实例），而不是 `dsh web`。
