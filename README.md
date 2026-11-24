@@ -1,6 +1,6 @@
 # dsh-rig
 
-给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的**右栏插件实验室**：在会话旁边跑一个真实、进程级隔离的 DSH，装插件、看日志、换版本，崩了不牵连你正在用的这个。
+给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的**右栏插件实验室**：建一个隔离的 DSH 实例，启动后在**右侧栏的浏览器标签里直接使用它** —— 装插件、看日志、点界面，崩了不牵连你正在用的这个。
 
 [English](README.en.md) · [更新日志](CHANGELOG.md)
 

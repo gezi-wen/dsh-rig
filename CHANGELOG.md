@@ -3,6 +3,29 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.3.0] - 2026-11-24
+
+### Changed
+
+- **面板重构成控制台**。去掉视框：它在桌面版里必然是那句 `dsh web authentication required`（`dsh-app://` 与
+  `http://127.0.0.1:<port>` 跨站 + `SameSite=Strict` cookie），留着只会把一段英文错误糊在中间占掉半个面板。
+  现在版面是：头带（名称/状态/端口/占用者）→ 操作带 → 授权带 → **日志占满剩余高度**。
+- **所有操作摆到面上**，不再藏进 `⋯` 菜单：停止（只停进程，不删实验室与配置）、在右侧栏打开、
+  在浏览器打开、重启、销毁。`⋯` 与它的三级子菜单一并删除。
+- 去掉「可介入 / 已锁定」：锁原本是挡 iframe 里的误触，没有 iframe 就没有意义。
+- 去掉「切换版本」整条线：面板入口、`GET /versions`、`POST /labs/:id/version`、
+  `plugin_lab` 的 `versions` 与 `set_version` 两个动作、版本相关的工具参数。宿主 core 的解析保持不动。
+- 项目描述改成现状：**在右侧栏的浏览器里起一个隔离的 DSH 实例用于开发测试**。
+
+### Fixed
+
+- 0.2.1 的 `client.js` 里有一处 `nonce is not defined`（重构时删了状态却漏了引用），面板会白屏。本版清掉，
+  并把残留引用（`menu` / `drawer` / `locked` / `frameUrl` / `Viewport`）一并扫干净。
+
+### Verified
+
+- `npm test` 68 条全绿；`client.js` 548 行（单 bundle 上限 620）。
+
 ## [0.2.1] - 2026-11-24
 
 ### Fixed
