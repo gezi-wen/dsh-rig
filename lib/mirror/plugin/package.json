@@ -1,0 +1,10 @@
+{
+  "name": "dsh-rig-mirror",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./host.js",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.1.0"
+  }
+}
