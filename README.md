@@ -120,7 +120,8 @@ dsh plugin --profile web add dsh-rig
 - **macOS 上默认路线不需要任何系统授权**：帧是实验室自己渲染的（`capturePage`），输入走进程内注入（`sendInputEvent`），
   都不碰屏幕录制与辅助功能。真被要求授权，说明走的是备用路线；授权后要**退出实验室再启动**才生效，
   拒绝的表现是全黑帧而不是报错。逐平台细节见 [docs/PLATFORMS.md](docs/PLATFORMS.md)。
-- **Linux 无图形会话自动降级成 headless**（SSH 登录、`DISPLAY` 与 `WAYLAND_DISPLAY` 都空）：面板里仍是 iframe，没有镜像画面。
+- **Linux 无图形会话**（SSH 登录、`DISPLAY` 与 `WAYLAND_DISPLAY` 都空）：实验室照常起，画面走右栏「浏览器」标签
+  （那里退回 iframe 载体；同一个宿主的 iframe 与实验室同站，登录态正常）。
   这是兜底，不是选项——「有没有屏幕」是客观事实，做成开关只会出现必然失败的组合。
   Wayland 下不依赖 portal，所以不会弹「允许共享屏幕」；代价是抓不到实验室窗口以外的任何东西（我们不需要）。
 - 桌面版与 web 版同时开着时共用同一份 `labs.json`。0.1.5 起写盘带锁并**读盘合并**：

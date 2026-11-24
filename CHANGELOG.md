@@ -3,6 +3,34 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.2.0] - 2026-11-24
+
+### Added
+
+- **「在面板打开」**：实验室运行时，主操作带多一个按钮，把实验室的界面开进右栏官方的「浏览器」标签
+  （`ctx.sidebarRight.openTab('browser', { params: { url } })`，地址自带一次性 token）。
+  没有 browser 插件时退回系统浏览器。
+- 0.2.0 起实验室的**可视形态**就是这条：原生渲染、原生输入，不再经过 iframe 或截图流。
+
+### Changed
+
+- 形态决策修正：原计划的「第二个 Electron 实例 + CDP 镜像」**不做**。
+  实验室继续是 headless（独立进程 + 独立 `DSH_HOME`），画面交给官方的浏览器载体。
+  `lib/backends/` 与 `lib/mirror/` 保留为**未接线**的备选（将来做多实验室并排、或在不带 browser 插件的宿主里用）。
+
+### Fixed
+
+- 内嵌视口在桌面版永远停在 `dsh web authentication required`。**不再尝试修 iframe**：
+  面板所在页面的 origin 是 `dsh-app://app/`，而实验室是 `http://127.0.0.1:46000`，两者不同站，
+  实验室的登录又是一颗 `SameSite=Strict` cookie —— 跨站 iframe 里这颗 cookie 不发送，
+  303 之后必然 401。`dsh web` 没有关鉴权的开关。官方 browser 插件在桌面版用的是 Electron `<webview>`
+  （独立 partition、自己就是顶层站点），同一个地址在那儿登录态正常。完整推导在 `docs/ROADMAP.md`。
+
+### Verified
+
+- 真机：右栏「浏览器」标签载入带 token 的实验室地址，界面正常渲染（2026-11-24）。
+- `npm test` 68 条全绿；`client.js` 620 行（单 bundle 上限）。
+
 ## [0.1.6] - 2026-11-24
 
 ### Fixed
