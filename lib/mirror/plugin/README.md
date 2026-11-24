@@ -51,7 +51,7 @@
 # 1) 把插件装进实验室的 profile（dsh plugin 就是把剩下的参数转发给该 profile 里的 pnpm；
 #    首次使用会自动初始化 profile）
 $env:DSH_HOME = "$env:LOCALAPPDATA\dsh-rig\labs\lab1\home"
-dsh plugin --profile rig-lab1 add file:E:\projects\dsh-rig\lib\mirror\plugin
+dsh plugin --profile rig-lab1 add file:<仓库路径>/lib/mirror/plugin
 
 # 2) 让实验室加载它：编辑 $env:DSH_HOME\profiles\rig-lab1\cordis.patch.yml，加一条
 #      - insert:
