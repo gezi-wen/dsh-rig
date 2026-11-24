@@ -3,6 +3,14 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.4.1] - 2026-11-24
+
+### Fixed
+
+- **「在右侧栏打开」实际打开了系统浏览器**。`browserOpener` 只在 `openLab()`（智能体首次驱动、自动展开那条路）里赋值，
+  而用户直接点面板按钮时它还是 `null`，于是走了兜底的 `window.open` —— 两个按钮行为一模一样。
+  现在 `apply()` 里就 `inject(['sidebarRight'])` 并接上入口，不等任何事件。
+
 ## [0.4.0] - 2026-11-24
 
 ### Added
