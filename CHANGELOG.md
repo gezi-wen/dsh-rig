@@ -3,6 +3,44 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.1.6] - 2026-11-24
+
+### Fixed
+
+- **宿主重启后实验室被锁成只读**（0.1.5 引入的回归）。归属判据从 `hostId` 改成
+  「记录里的 pid 还活着、且不是本进程管的那个」。0.1.5 用 `hostId` 判归属，而它是
+  `randomBytes(6)` **每进程随机**的 —— 宿主重启一次，之前建的实验室全部变成「别人的」：
+  主按钮恒「接手」、「重启」被 `!live` 挡、「销毁」被 `!mine` 挡，而 claim 只换会话不改归属，
+  于是**没有任何可达的启动入口**（2026-11-24 实测把 lab1 彻底锁死，只能手删 `labs.json`）。
+- **profile 建不出来时静默失败**。`start()` 前现在会验 `profiles/<profile>` 在不在，
+  不在就补建一次；补建失败抛明确错误（带原因），不再一路走到
+  `profile "rig-lab1" does not exist`。lab1 从 2026-11-22 创建那天起就没成功过
+  （`labs/lab1/home/init.err` 里躺着 `Cannot find module 'E:\Program'`），之后每次启动都崩。
+- **接手（claim）不换归属**：`POST /labs/:id/claim` 现在一并清掉 pid 标记，
+  否则 `foreign` 会一直挂到那个进程自然退出。
+
+### Changed
+
+- `labs.json` 新增可选字段 `pid` / `pidStartedAt`，**版本号仍是 1**（加字段不动版本）。
+  为什么不升：旧版看到不认识的版本号会当「未知格式 → 按空状态处理」，
+  那会让一次回滚把整份 `labs.json` 读成空的、并在下一次写盘时清掉。
+  按「只能新增、不覆盖」的纪律走；旧版读到多余字段会忽略，只是丢掉 pid 能力。
+- 实验室根目录的兜底修了：非 Windows 上原来会退成 `USERPROFILE/dsh-rig`，
+  连 `USERPROFILE` 都没有（macOS / Linux）时**退成当前工作目录** `./dsh-rig`。
+  现在按 LOCALAPPDATA → APPDATA → XDG_DATA_HOME → `~/.local/share` 取值，最后一层是 `os.homedir()`，
+  永远不会落到 cwd。
+- 一次性准备（profile 与凭据）从 `supervisor.js` 抽到 `lib/lab/provision.js`，
+  就绪等待抽到 `lib/lab/health.js` —— supervisor 加完 pid 与补种后已贴 420 行上限。
+- 面板 `⋯` 菜单：没在运行时「重启」变「启动」且可点（以前启动入口只在主按钮上，
+  而主按钮此时正显示「接手」，等于两条路都断）。
+
+### Verified
+
+- 用**与桌面宿主相同的参数**（Electron exe + `Program Files` 空格路径）在临时目录跑
+  create → seed → start：profile 补建成功（exit 0）、实例 running、`foreign=false`、
+  端口 46000 复用。
+- `npm test` 全绿（新增 6 条：pid 归属四种边界、老记录补默认字段、pid 往返、根目录三平台兜底）。
+
 ## [0.1.5] - 2026-11-21
 
 ### Fixed

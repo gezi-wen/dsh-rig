@@ -32,6 +32,24 @@ test('隔离判定：空路径一律不放行', () => {
   assert.equal(assertIsolated('E:/x', '').ok, false)
 })
 
+test('实验室根目录：三平台各自落对，绝不退成当前工作目录', () => {
+  assert.equal(resolveLabRoot('E:/custom', {}), 'E:/custom', '显式配置最高优先')
+  assert.match(resolveLabRoot('  ', { LOCALAPPDATA: 'C:/Users/x/AppData/Local' }), /dsh-rig$/u, '空白配置不算配置')
+
+  const win = resolveLabRoot(undefined, { LOCALAPPDATA: 'C:/Users/x/AppData/Local' })
+  assert.match(win, /AppData[\\/]Local[\\/]dsh-rig$/u, 'Windows 落 LOCALAPPDATA')
+
+  // macOS / Linux 没有 LOCALAPPDATA/APPDATA：必须落到 home 下的固定位置。
+  const mac = resolveLabRoot(undefined, { HOME: '/Users/x' })
+  assert.match(mac, /\.local[\\/]share[\\/]dsh-rig$/u, 'macOS/Linux 落 ~/.local/share')
+
+  // 连 HOME 都没有的极端环境：用 os.homedir() 兜底，**仍然不能是 '.'**。
+  // 退成当前目录的话，换个 profile 起服务就换一处落点，数据看起来像凭空消失。
+  const bare = resolveLabRoot(undefined, {})
+  assert.ok(!bare.startsWith('.'), `兜底不能是相对路径，实际 ${bare}`)
+  assert.match(bare, /dsh-rig$/u)
+})
+
 test('env 白名单：凭据类变量绝不进实验室', () => {
   const env = sanitizeEnv(
     {
@@ -148,12 +166,13 @@ test('labs.json：坏文件降级成空状态而不是抛错', () => {
   assert.equal(good.state.labs[0].profile, 'rig-lab1', '缺 profile 时要按 id 补出来')
 })
 
-test('labs.json：只落静态字段，token/pid 不进盘', () => {
+test('labs.json：token 不进盘，pid 进盘（0.1.6 起用于跨进程判归属）', () => {
   const state = emptyState()
-  addLab(state, { id: 'lab1', name: '甲', version: 'host' })
+  addLab(state, { id: 'lab1', name: '甲', version: 'host', pid: 4242, pidStartedAt: '2026-11-24T00:00:00.000Z' })
   const text = serializeState(state)
   assert.doesNotMatch(text, /token/u)
-  assert.doesNotMatch(text, /pid/u)
+  assert.match(text, /"pid": 4242/u, 'pid 必须落盘：跨进程判「是不是别人在跑」只认它')
+  assert.match(text, /"pidStartedAt"/u)
   assert.match(text, /lab1/u)
   removeLab(state, 'lab1')
   assert.equal(findLab(state, 'lab1'), null)

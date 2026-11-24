@@ -41,12 +41,88 @@ test('合并：不改入参（纯函数）', () => {
   assert.equal(ours.labs.length, 0)
 })
 
-test('归属：老记录没有 hostId 时当自己的（否则升级完就把用户锁在门外）', () => {
-  assert.equal(isForeign({ id: 'lab1' }, 'host-a'), false)
-  assert.equal(isForeign({ id: 'lab1', hostId: null }, 'host-a'), false)
-  assert.equal(isForeign({ id: 'lab1', hostId: 'host-a' }, 'host-a'), false)
-  assert.equal(isForeign({ id: 'lab1', hostId: 'host-b' }, 'host-a'), true)
-  assert.equal(isForeign(null, 'host-a'), false)
+test('归属：没有 pid 就是自己的（从没跑过 / 已正常停止）', () => {
+  assert.equal(isForeign({ id: 'lab1' }, { ownedPid: null, alive: () => true }), false)
+  assert.equal(isForeign({ id: 'lab1', pid: null }, { ownedPid: null, alive: () => true }), false)
+  assert.equal(isForeign(null, {}), false)
+})
+
+test('归属：pid 就是本进程管的那个 → 自己的', () => {
+  assert.equal(isForeign({ id: 'lab1', pid: 4242 }, { ownedPid: 4242, alive: () => true }), false)
+})
+
+test('归属：pid 活着且不是我的 → 别人的（真孤儿，交给 orphans 收）', () => {
+  assert.equal(isForeign({ id: 'lab1', pid: 4242 }, { ownedPid: null, alive: (pid) => pid === 4242 }), true)
+})
+
+test('归属：pid 已经死了 → 自己的（宿主重启后不该被锁死）', () => {
+  assert.equal(isForeign({ id: 'lab1', pid: 4242 }, { ownedPid: null, alive: () => false }), false)
+})
+
+test('归属：hostId 不同不再导致只读 —— 0.1.5 锁死事故的回归用例', () => {
+  // 0.1.5 用 hostId（每进程随机）判归属：宿主一重启，自己的实验室全变成「别人的」，
+  // 主按钮恒「接手」、销毁恒灰，claim 又不改 hostId，于是没有任何可达的启动入口。
+  assert.equal(isForeign({ id: 'lab1', hostId: '某个上一个进程的随机值' }, { ownedPid: null, alive: () => true }), false)
+})
+
+test('兼容：老记录缺 pid 时补 null，版本号不动（回滚安全）', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dsh-rig-merge-'))
+  const file = join(root, 'labs.json')
+  try {
+    await writeFile(
+      file,
+      JSON.stringify({
+        schemaVersion: 1,
+        labs: [
+          {
+            id: 'lab1',
+            name: '实验台 lab1',
+            version: 'host',
+            profile: 'rig-lab1',
+            port: 46000,
+            ownerSessionId: null,
+            ownerSince: null,
+            hostId: null,
+            createdAt: '2026-11-22T08:37:32.369Z',
+          },
+        ],
+      }),
+      'utf8',
+    )
+    const store = new LabStateStore({ file })
+    const { state, problem } = await store.load()
+    assert.equal(problem, null)
+    assert.equal(state.schemaVersion, 1, '版本号必须还是 1：升版本会让旧版把整份文件读成空的')
+    assert.equal(state.labs[0].pid, null, '老记录没有 pid，补成 null')
+    assert.equal(state.labs[0].pidStartedAt, null)
+
+    await store.save(state)
+    const onDisk = JSON.parse(await readFile(file, 'utf8'))
+    assert.equal(onDisk.schemaVersion, 1)
+    assert.equal(onDisk.labs[0].profile, 'rig-lab1', '补字段不搬内容')
+
+    const again = await store.load()
+    assert.deepEqual(again.state, state, '幂等：再读一次结果相同')
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('兼容：pid 这类新字段能往返（旧版读到会忽略，但不该被本版自己丢掉）', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dsh-rig-merge-'))
+  const file = join(root, 'labs.json')
+  try {
+    const store = new LabStateStore({ file })
+    await store.save({
+      schemaVersion: 1,
+      labs: [{ ...lab('lab1', null), pid: 4242, pidStartedAt: '2026-11-24T00:00:00.000Z' }],
+    })
+    const { state } = await store.load()
+    assert.equal(state.labs[0].pid, 4242)
+    assert.equal(state.labs[0].pidStartedAt, '2026-11-24T00:00:00.000Z')
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
 })
 
 test('落盘：两个宿主进程交替写，谁也不会吞掉对方的实验室', async () => {
