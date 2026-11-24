@@ -1,6 +1,6 @@
 {
   "name": "dsh-rig",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Right-sidebar plugin lab for DeepSeek Harness: start an isolated DSH instance and drive it in the sidebar browser tab.",
   "type": "module",
   "main": "lib/index.js",
