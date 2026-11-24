@@ -110,6 +110,22 @@ DeepSeek Harness.exe --user-data-dir=<lab>/userdata --remote-debugging-port=<470
 代价：看不到窗口装饰与原生对话框。DSH 的 UI 全在 renderer 里，够用；壳自己的欢迎页/更新弹窗看不到，
 需要时用「弹出到窗口」（`window.open` 那个动作）人工看。
 
+### 为什么 0.1.x 的内嵌视口在桌面版里救不回来（2026-11-24 定案）
+
+0.1.5 修的是「`localhost` 页面 iframe 到 `127.0.0.1:46000`」—— 那是 http 对 http，换主机名就同站了。
+桌面版还有更深的一层：**面板所在的 origin 是 `dsh-app://app/`**（自定义协议，CDP 的 page target 就是这个 URL），
+而 iframe 里的实验室是 `http://127.0.0.1:46000`。两者**不同站**，实验室登录用的却是一颗
+`SameSite=Strict` 的 cookie（实测响应头：`set-cookie: dsh-auth-…; Path=/; HttpOnly; SameSite=Strict`）
+→ 跨站 iframe 里这颗 cookie 不发送 → 303 之后请求 `/` 得到 401 → 面板里只看到
+`dsh web authentication required`。web 版没这个问题，因为顶层就是 `http://127.0.0.1:<端口>`，与实验室同站
+（SameSite 只比较 scheme + 可注册域，不看端口）。
+
+`dsh web` 没有关鉴权的开关（`--help` 只有 host / port / no-open / public-url / trusted-host / tls-*），
+`--trusted-host` 管的是 `/api` 的 browser-trust 栅栏，管不到登录 cookie。
+反向代理能绕，但要连 WebSocket/SSE 一起转发，成本和收益不成比例。
+
+**所以 0.1.x 不再修这个**：CDP 镜像不走 iframe、不碰 cookie，是这一族的根治。
+
 `lib/mirror/plugin/` 保留为**备选**（若将来壳开放推帧桥），默认不启用。
 
 ```js
