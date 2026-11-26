@@ -3,6 +3,23 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.6.0] - 2026-11-26
+
+### Added
+
+- **卸载**：「装插件」那一行加了「卸载」按钮，填包名点它 —— `dsh plugin remove`。
+- **已装计数**：同一行末尾显示 `已装 N` / `未装`，鼠标悬停能看完整清单（`name spec` 每行一个）。
+- `plugin_lab` 新增两个动作：`plugins`（列清单）、`uninstall`（带 `spec`）。
+- HTTP：`GET /labs/:id/plugins`、`POST /labs/:id/plugins`（卸载）。
+- 三条操作在宿主侧合成一个 `supervisor.pluginOp(id, 'install'|'list'|'remove', spec)` —— supervisor 已贴行数上限。
+
+### Verified
+
+- 真机完整往返：装一个 `file:` 本地最小插件 → 清单立刻出现 → 卸载 → 清单清空，两步都 `exit 0`。
+- 顺带确认两件事实：实验室 profile 的 `dependencies` 才是「用户装的插件」，内核在 `dsh.profile.bundles`（`base` + `web-app`），
+  所以初始清单为 0 是正常的；装进去若没声明 `dsh.bundle`，DSH 会警告
+  `installed as a plain dependency, not a profile layer` —— 「装了却没生效」先看这句。
+
 ## [0.5.0] - 2026-11-26
 
 ### Added
