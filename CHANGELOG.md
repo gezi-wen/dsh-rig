@@ -3,6 +3,24 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.5.0] - 2026-11-26
+
+### Added
+
+- **面板里能装插件**：新增一行输入框，填包名 / `github:owner/repo` / `file:路径` / 本地目录，点「安装」。
+  装进的是**实验室自己的 profile**，不是宿主。
+- `plugin_lab` 新增 `action: 'install'`（参数 `spec`），智能体也能装。**没有新增工具** ——
+  这个工具常驻，加一个 enum 几乎不花 token；新工具会让每轮都多背一份 schema。
+- 底层走 DSH 自己的路：`DSH_HOME=<实验室 home> dsh plugin --profile <p> add <spec>` ——
+  与界面「插件」页的「添加插件」是同一套（那条命令就是把参数转发给 pnpm）。
+- 装完**不会自动生效**：DSH 的插件注入表是进程启动时收集一次的，日志会提示「重启实验室后生效」。
+
+### Verified
+
+- 真机：装一个不存在的包 → pnpm 回 `ERR_PNPM_FETCH_404`，工具返回 `{ok:false, exit:1, reason:'exit-nonzero'}`，
+  日志带完整错误与实验室自己的 `.plugin-manager/logs/operation-*/pnpm.log` 路径。
+- `npm test` 68 条全绿。
+
 ## [0.4.1] - 2026-11-24
 
 ### Fixed
