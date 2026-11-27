@@ -3,6 +3,29 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.9.0] - 2026-11-27
+
+### Added
+
+- **实时刷**：宿主每 3 秒拉一次实验室的 `/bridge/events`，把**新**事件按日志行推进面板的日志区：
+
+  ```
+  [实验室] 29 turn/start
+  [实验室] 31 step/start
+  [实验室] 32 user/message
+  [实验室] 33 assistant/message · 好
+  [实验室] 35 turn/end
+  ```
+
+  **零新增 UI** —— 复用日志那一块（实验室 stdout 与它同一处）。
+  只拉增量（记住每个 lab 的 `lastSeq`），第一次对齐到末尾不刷历史；失败静默重试，不刷噪声。
+
+### Documented
+
+- **截图**本来就有，这次写进说明：`lab_ui action: 'screenshot'` 截实验室页面存 PNG（`labs/<id>/shots/`），
+  模型直接读图看。实测 1246×803，侧栏、弹窗、按钮全部可辨 —— **改插件 UI 时「看一眼」就靠它**。
+  配合 `snapshot`（读可交互元素）与 `click`/`type`（按文字操作），构成「看 → 点 → 再看」的闭环。
+
 ## [0.8.0] - 2026-11-27
 
 ### Added
