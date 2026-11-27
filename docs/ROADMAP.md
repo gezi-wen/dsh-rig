@@ -172,10 +172,33 @@ input  { type: 'mouse'|'key'|'wheel', x, y, button, key, delta }
 
 验收：故意让实验室吃 2 GB，宿主内存曲线不抖，实验室被停且日志写清原因。
 
-## 五、0.3.0 · 内桥（1 周，后置）
+## 五、0.7.0 · 内桥（2026-11-27 方案定型）
 
-显微镜插件扩两条通道：`dispatch`（往实验室里的会话投一条用户消息）、`events`（订阅实验室的轮次/工具事件）。
-**前置**：0.2.0 的插件通道跑稳。唯一未验证的技术点仍是「程序化提交一条用户消息」的确切调用，先写探针再定。
+目标：宿主能**往实验室里的会话派活**、能收到轮次事件。
+
+### 三条候选都查过了，只有一条能用
+
+| 候选 | 结论 |
+|---|---|
+| 实验室的 HTTP/WS API（前端那套） | 前端与后端走 connection 服务（WS + typert 协议），没有公开的「发消息」REST 端点；逆向协议成本高且随版本漂 |
+| `@deepseek-ai/dsh-sdk-jsonrpc-server`（官方 SDK 服务端） | **只能用 stdio**：它要求进程 stdout 只有 JSON-RPC 帧（README 明写「stdout is the protocol」），挂不进实验室的 web 进程 |
+| **实验室里装一个小桥插件，进程内调 `ctx.agents`** | ✅ 正路。`AgentHandle.followup()` 排队一条普通下一轮 prompt，`steer()` 是插队 |
+
+### 形态
+
+- **lab 侧**：`lib/bridge/plugin/`（独立小插件，装进实验室 profile）
+  - 注册两条 HTTP 路由在实验室自己的 webServer 上：`POST /bridge/send { text }`、`GET /bridge/events`（SSE）
+  - 收到 `send` → 拿到 / 创建该会话的 `AgentHandle` → `followup({ text })`
+  - 订阅 `session.event` / `session.status` 转发成 SSE
+  - 鉴权：与 dsh-rig 宿主侧共用一次性 token（实验室端只认这个头）
+- **宿主侧**：`POST /labs/:id/send`、`GET /labs/:id/bridge/events`（转发），面板加一行输入框
+- **顺序**：先写探针证明「插件里拿得到 agents 且 followup 生效」，再做端点与 UI
+
+### 风险
+
+- 桥插件要装进实验室 profile —— 装插件已有能力（0.5.0），但**装完要重启实验室**。
+- `followup()` 的参数形状（纯文本 vs content blocks）还没实测，探针里确认。
+- 实验室里若也装了 dsh-rig 自己，会和宿主抢 `labs.json`（ROADMAP R1 那条防护仍未做）。
 
 ## 六、跨平台矩阵（要写进 README）
 
