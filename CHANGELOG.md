@@ -3,6 +3,25 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.8.0] - 2026-11-27
+
+### Added
+
+- **事件回传**：`plugin_lab` 新增 `action: 'events'`（参数 `sessionId`，默认 `rig-bridge`）——
+  回实验室会话最近的事件（`seq` / `type` / 文本摘要）。智能体因此能看见「它在干什么」，而不只是知道「干完了」。
+- 桥插件新增 `GET /bridge/events?sessionId=&limit=`，读法与官方 `dsh-headless` 的 `liveEvents` 同形
+  （`session.eventAt(seq)` + `session.seq`）。
+- **重启后的会话自动恢复**：`/bridge/events` 与 `/bridge/send` 在没有活句柄时都会先
+  `agents.resume({ resumeSessionId })` —— 所以进程重启不会让会话断掉。
+
+### Verified
+
+```
+fetchEvents → total 19，seq15 assistant/message "好"
+send        → {ok:true, created:false, ms:4, waitedMs:778, idle:true}   ← created:false 证明 resume 生效
+fetchEvents → seq24-27，新的 assistant/message "好"
+```
+
 ## [0.7.2] - 2026-11-27
 
 ### Added
