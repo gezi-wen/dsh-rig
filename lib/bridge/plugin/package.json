@@ -1,0 +1,8 @@
+{
+  "name": "dsh-rig-bridge",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "host.js",
+  "description": "Probe: report the agents service shape inside a rig lab"
+}

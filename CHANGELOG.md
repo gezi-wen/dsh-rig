@@ -3,6 +3,22 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.6.1] - 2026-11-27
+
+### Fixed
+
+- **实验室的模型凭据停在创建那天**。`copyCredentials` 只在 `create()` 里跑一次，宿主之后新配的 key 不会同步 ——
+  实验室里的智能体于是报 `llm-deepseek: no API key for provider route "deepseek-official"`，
+  而面板上一切正常（有会话、有消息、就是没有回复）。实测宿主 `.credentials.yaml` 10.4 KB / 4 条记录，
+  实验室只有 0.2 KB / 1 条。现在 `#provision()` 每次都刷新凭据，`start()` 也走它，所以每次启动都会同步。
+- **安装失败时看不到原因**。`install` / `remove` 的日志过滤只放行 `err` 流，而 spawn 阶段的诊断走 `rig` 流 ——
+  表现是「装插件失败：exit null」且实验室日志里什么都没有。现在 `rig` 流一律记录。
+
+### Added
+
+- `lib/bridge/plugin/`：内桥探针（装进实验室的独立小插件），三条端点是 `/bridge/health`、`/bridge/shape`、`/bridge/send`。
+  **未接线、未随主包启用**，只是把验证过的东西留在仓库里，0.7.0 正式实现从它长出来。
+
 ## [0.6.0] - 2026-11-26
 
 ### Added
