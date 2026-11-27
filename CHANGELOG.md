@@ -3,6 +3,37 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.7.0] - 2026-11-27
+
+### Added
+
+- **内桥**：`plugin_lab` 新增两个动作。
+  - `bridge` —— 把桥插件装进实验室 profile，并自动往 `cordis.patch.yml` 写 insert 行（见下）。
+  - `send`（参数 `text`）—— 把一句话**投进实验室的会话**：建会话（或恢复）→ `agent.followup(...)`。
+- 底层就是官方那条路：`ctx.agents.create/resume` + `agent.followup(createUserMessage({ content, source }))`，
+  与 `dsh-headless` / `dsh-api-session-controller` 的调用点一致。**不模拟界面**，直接把输入送进 agent 的 inbox。
+- 宿主端点 `POST /labs/:id/bridge`（`action: 'install' | 'send'`）。
+
+### Fixed
+
+- 桥插件恢复会话的参数写错了：是 `resumeSessionId`，不是 `sessionId`；
+  传错时会在盘上已有会话的情况下报 `SessionAlreadyExistsError`。
+
+### Verified
+
+真机端到端（不是单点）：
+
+```
+pluginOp('lab1','bridge')  → 装好 + patch 写好
+重启实验室                 → GET /bridge/health = {ok:true,v:"0.0.2"}
+pluginOp('lab1','send', …) → {ok:true, sessionId:'rig-bridge-3', ms:10}
+会话记录（zstd 解压）        → assistant/message + turn/end {kind:'completed'}
+```
+
+**「装插件 ≠ 加载插件」这条坑也一并解决了**：只 `plugin add` 只会进 `dependencies`，
+DSH 会警告 `installed as a plain dependency, not a profile layer` 且根本不加载；
+`ensureBridge()` 现在会在 `cordis.patch.yml` 里补 insert 行。
+
 ## [0.6.1] - 2026-11-27
 
 ### Fixed
