@@ -3,6 +3,27 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.7.2] - 2026-11-27
+
+### Added
+
+- **孤儿回收定时化**（`lib/lab/reaper.js`）：宿主每 10 分钟跑一次 `reapOrphans()`，
+  只杀「命令行带 `--profile rig-<已知 lab>` 且当前不在管」的进程；在 `lib/index.js` 组合根启动、dispose 时停
+  （supervisor 已贴 420 行上限，不能再往里加）。
+
+### Why
+
+2026-11-27 排查 `wait` 为什么不生效，花了一小时才发现 **46000 端口被一个孤儿实验室进程占着**：
+宿主认为的 pid 是新的、端口上却是老的，面板显示 running，没有任何信号。
+孤儿回收原本只有 `plugin_lab` 的手动动作（`orphans` / `reap`），没人会想起来点。
+
+### Verified
+
+造一个假孤儿（`node hang.mjs --profile rig-lab1`）→ sweep 立刻发现并清掉，日志
+`[dsh-rig] 孤儿回收：发现 2 个，清掉 2`。
+
+⚠️ `liveProfileNames` 传什么就被排除什么 —— 测试时传空数组会连真实验室一起杀（踩过一次）。
+
 ## [0.7.1] - 2026-11-27
 
 ### Added
