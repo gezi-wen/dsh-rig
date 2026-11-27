@@ -3,6 +3,25 @@
 本项目的所有重要改动都会记在这里。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.7.1] - 2026-11-27
+
+### Added
+
+- **`send` 现在会等这一轮跑完再回**（`wait` 默认开）：桥插件在 `followup()` 之后 `await agent.whenIdle()`，
+  回执里带 `waitedMs` 与 `idle`。智能体因此能「派活 → 知道干完了」，不用再去翻日志。
+  上限 180 秒（`timeoutMs` 可调，宿主侧最多放宽到 600 秒）。
+
+### Verified
+
+- 真机：`POST /bridge/send {wait:true}` → `{ok:true, waitedMs:1288, idle:true}`。
+
+### 踩到的（值得记）
+
+调试 `wait` 时一直不生效，最后发现 **46000 端口被一个孤儿实验室进程占着**（19:55 那次脚本留下的），
+我一直在跟孤儿对话 —— 宿主认为的 pid 是新的，端口上却是老的。判据：
+`Get-NetTCPConnection -LocalPort 46000` 的 pid ≠ `/state` 里的 pid。
+实验室发现端口被占会**自动换到 46001**（port.js 的行为），所以「端口号变了」本身也是一个信号。
+
 ## [0.7.0] - 2026-11-27
 
 ### Added
